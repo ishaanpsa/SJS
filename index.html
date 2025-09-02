@@ -1,19 +1,62 @@
 <!doctype html>
 <html lang="pa" dir="ltr">
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SJS — Viewer</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>SJS — Mobile Viewer</title>
 <style>
-  :root { --w: 1000px; }
-  body { margin: 0 auto; max-width: var(--w); padding: 1rem; font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-  header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: .5rem; }
-  .controls { display: flex; align-items: center; gap: .5rem; }
-  button { padding: .5rem .75rem; border: 1px solid #e5e7eb; border-radius: .5rem; background: #f8fafc; cursor: pointer; font: inherit; }
-  button:disabled { opacity: .5; cursor: not-allowed; }
-  #pageIndicator { font-weight: 600; }
-  main img { width: 100%; height: auto; display: block; border: 1px solid #eee; border-radius: .5rem; }
-  footer { color: #6b7280; margin-top: .75rem; font-size: .9rem; }
-  input[type="number"] { width: 5rem; padding: .35rem .5rem; border: 1px solid #e5e7eb; border-radius: .4rem; }
+  :root{
+    --maxw: 1000px;
+    --gap: .75rem;
+    --muted:#6b7280;
+    --border:#e5e7eb;
+    --bg:#fff;
+  }
+  /* Layout */
+  body{margin:0;background:var(--bg);color:#111;font: 16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial;}
+  header{
+    position: sticky; top: 0; z-index: 10;
+    background: #fffccf;
+    padding: .5rem .75rem calc(.5rem + env(safe-area-inset-bottom));
+    border-bottom:1px solid var(--border);
+    display:grid; grid-template-columns:1fr auto; gap:.5rem; align-items:center;
+  }
+  .controls{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+  button{
+    min-height:44px; padding:.6rem .9rem; font: inherit;
+    border:1px solid var(--border); border-radius:.6rem; background:#f8fafc; cursor:pointer;
+  }
+  button:disabled{opacity:.5;cursor:not-allowed}
+  #pageIndicator{font-weight:700}
+  #wrap{display:flex;align-items:center;gap:.4rem}
+  #jump{width:5.2rem; min-height:44px; padding:.45rem .6rem; border:1px solid var(--border); border-radius:.5rem}
+  #fitToggle{min-width:110px}
+
+  main{margin:0 auto; padding: var(--gap); max-width: var(--maxw);}
+  .stage{
+    position:relative; width:100%;
+    /* Fit to width by default; height mode toggles via JS class */
+    display:flex; align-items:center; justify-content:center;
+  }
+  img{
+    display:block; max-width:100%; height:auto; border:1px solid var(--border); border-radius:.6rem;
+    background:#fff;
+  }
+  .fit-height img{
+    width:auto; height:calc(100svh - 110px);  /* leave room for header */
+    max-height:calc(100svh - 110px);
+  }
+  footer{color:var(--muted); font-size:.9rem; margin: .25rem auto .75rem; max-width: var(--maxw); padding: 0 var(--gap);}
+  #err{color:#b91c1c; font-size:.9rem; margin-top:.5rem; display:none}
+
+  /* Mobile typography */
+  @media (max-width: 560px){
+    body{font-size: clamp(15px, 3.8vw, 16px);}
+    #pageIndicator{font-weight:600}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{scroll-behavior:auto; transition:none !important}
+  }
 </style>
 <body>
   <header>
@@ -23,84 +66,121 @@
       <button id="nextBtn" aria-label="Next page">Next ▶</button>
     </div>
     <div class="controls">
-      <label for="jump">Jump to:</label>
-      <input id="jump" type="number" min="1" max="10" value="1">
-      <button id="goBtn">Go</button>
+      <button id="fitToggle" title="Toggle fit: width/height">Fit: Width</button>
+      <div id="wrap">
+        <label for="jump">Jump:&nbsp;</label>
+        <input id="jump" type="number" min="1" max="10" inputmode="numeric" pattern="[0-9]*" value="1">
+        <button id="goBtn">Go</button>
+      </div>
     </div>
   </header>
+
   <main>
-    <img id="pageImg" src="assets/page-001.png" alt="PDF page 1" loading="eager">
+    <div class="stage" id="stage">
+      <img id="pageImg" alt="PDF page 1" loading="eager">
+    </div>
+    <div id="err"></div>
   </main>
-  <footer>
-    Use keyboard: ← / → to navigate. Opens on page 1.
-  </footer>
+  <footer>Tips: Swipe ◀/▶, or use ←/→. “Fit: Height” shows the whole page on tall phones.</footer>
 
 <script>
-  const images = ["assets/page-001.png", "assets/page-002.png", "assets/page-003.png", "assets/page-004.png", "assets/page-005.png", "assets/page-006.png", "assets/page-007.png", "assets/page-008.png", "assets/page-009.png", "assets/page-010.png"];
-  let idx = 0; // zero-based, start at first page
+  // ---- Settings ------------------------------------------------------------
+  const NUM_PAGES = 10;                 // update if you add more pages
+  const BASE = "assets";                // images live at /assets/page-001.png …
+  const fname = n => `page-${String(n).padStart(3,"0")}.png`;
+  // Cache-bust once per load to avoid stale HTML; images can stay cached after first view
+  const bust = `?v=${Date.now()}`;
 
-  const img = document.getElementById('pageImg');
-  const prev = document.getElementById('prevBtn');
-  const next = document.getElementById('nextBtn');
-  const ind = document.getElementById('pageIndicator');
-  const jump = document.getElementById('jump');
-  const go = document.getElementById('goBtn');
+  // ---- Elements ------------------------------------------------------------
+  let idx = 0; // zero-based
+  const img   = document.getElementById('pageImg');
+  const prev  = document.getElementById('prevBtn');
+  const next  = document.getElementById('nextBtn');
+  const ind   = document.getElementById('pageIndicator');
+  const jump  = document.getElementById('jump');
+  const go    = document.getElementById('goBtn');
+  const err   = document.getElementById('err');
+  const stage = document.getElementById('stage');
+  const fitToggle = document.getElementById('fitToggle');
 
-  function update() {
-    img.src = images[idx];
-    img.alt = `PDF page ${idx+1}`;
-    ind.textContent = `Page ${idx+1} / 10`;
-    jump.value = idx + 1;
-    prev.disabled = (idx === 0);
-    next.disabled = (idx === images.length - 1);
-    // Update hash for deep link (optional)
-    location.hash = `#p${idx+1}`;
+  // ---- Helpers -------------------------------------------------------------
+  function urlFor(n){ return `${BASE}/${fname(n)}${bust}`; }
+  function setError(m){ err.style.display='block'; err.textContent=m; console.error(m); }
+  function clearError(){ err.style.display='none'; err.textContent=''; }
+  function update(){
+    clearError();
+    const n = idx+1;
+    img.src = urlFor(n);
+    img.alt = `PDF page ${n}`;
+    ind.textContent = `Page ${n} / ${NUM_PAGES}`;
+    jump.value = n;
+    prev.disabled = (idx===0);
+    next.disabled = (idx===NUM_PAGES-1);
+    location.hash = `#p${n}`;
+
+    // Preload next page for snappy nav
+    const nxt = idx + 1;
+    if (nxt < NUM_PAGES){
+      const pre = new Image();
+      pre.decoding = "async";
+      pre.loading = "lazy";
+      pre.src = `${BASE}/${fname(nxt+1)}${bust}`;
+    }
   }
 
-  prev.addEventListener('click', () => { if (idx > 0) { idx--; update(); } });
-  next.addEventListener('click', () => { if (idx < images.length - 1) { idx++; update(); } });
-  go.addEventListener('click', () => {
-    let n = parseInt(jump.value, 10);
-    if (!isNaN(n)) {
-      n = Math.min(Math.max(n, 1), images.length);
-      idx = n - 1;
-      update();
+  // ---- Events: buttons/keyboard -------------------------------------------
+  prev.addEventListener('click', () => { if(idx>0){ idx--; update(); } });
+  next.addEventListener('click', () => { if(idx<NUM_PAGES-1){ idx++; update(); } });
+  go.addEventListener('click',   () => {
+    let n = parseInt(jump.value,10);
+    if(!isNaN(n)){ n = Math.min(Math.max(n,1), NUM_PAGES); idx=n-1; update(); }
+  });
+  window.addEventListener('keydown', e => {
+    if(e.key==='ArrowLeft'  && idx>0)            { idx--; update(); }
+    if(e.key==='ArrowRight' && idx<NUM_PAGES-1)  { idx++; update(); }
+  });
+
+  // ---- Touch: swipe navigation ---------------------------------------------
+  let sx = 0, sy = 0, moved = false;
+  const THRESH = 40; // pixels
+  stage.addEventListener('touchstart', (e)=>{
+    const t = e.changedTouches[0]; sx=t.clientX; sy=t.clientY; moved=false;
+  }, {passive:true});
+  stage.addEventListener('touchmove', ()=>{ moved=true; }, {passive:true});
+  stage.addEventListener('touchend', (e)=>{
+    if(!moved) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - sx, dy = t.clientY - sy;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > THRESH){
+      if (dx < 0 && idx < NUM_PAGES-1) { idx++; update(); }   // swipe left → next
+      if (dx > 0 && idx > 0)           { idx--; update(); }   // swipe right → prev
     }
+  }, {passive:true});
+
+  // ---- Fit toggle (Width/Height) -------------------------------------------
+  let fit = "width"; // default
+  function applyFit(){
+    if (fit === "height"){ stage.classList.add('fit-height'); fitToggle.textContent = "Fit: Height"; }
+    else { stage.classList.remove('fit-height'); fitToggle.textContent = "Fit: Width"; }
+  }
+  fitToggle.addEventListener('click', ()=>{
+    fit = (fit === "width" ? "height" : "width");
+    applyFit();
   });
 
-  // Keyboard navigation
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowLeft') { if (idx > 0) { idx--; update(); } }
-    if (e.key === 'ArrowRight') { if (idx < images.length - 1) { idx++; update(); } }
+  // ---- Image error hint ----------------------------------------------------
+  img.addEventListener('error', ()=>{
+    setError(`Couldn’t load: ${img.src.replace(location.origin,'')}.
+Check that the file exists (case-sensitive) at ${BASE}/${fname(idx+1)}.`);
   });
 
-  // Open at hash if provided (#p3 -> page 3), else page 1
-  function initFromHash() {
+  // ---- Init ----------------------------------------------------------------
+  (function init(){
     const m = location.hash.match(/#p(\d+)/i);
-    if (m) {
-      const n = Math.min(Math.max(parseInt(m[1], 10), 1), images.length);
-      idx = n - 1;
-    } else {
-      idx = 0;
-    }
+    if(m){ idx = Math.min(Math.max(parseInt(m[1],10)-1,0), NUM_PAGES-1); }
+    applyFit();
     update();
-  }
-
-  // Preload next image for snappy nav
-  const observer = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      if (entry.isIntersecting) {
-        const nextIdx = idx + 1;
-        if (nextIdx < images.length) {
-          const pre = new Image();
-          pre.src = images[nextIdx];
-        }
-      }
-    }
-  });
-  observer.observe(img);
-
-  initFromHash();
+  })();
 </script>
 </body>
 </html>
