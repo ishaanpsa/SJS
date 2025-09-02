@@ -13,11 +13,10 @@
 
   /* Slim bottom bar */
   .nav{ position:fixed; left:0; right:0; bottom:0; z-index:10;
-        display:flex; align-items:center; justify-content:space-between; gap:.5rem;
-        height:48px; padding:0 10px env(safe-area-inset-bottom);
+        display:flex; align-items:center; justify-content:space-between;
+        height:48px; padding:0 12px env(safe-area-inset-bottom);
         border-top:1px solid var(--border); background:#fffccf; }
   .nav small{ color:#111; font-weight:600; }
-  .nav .right{ display:flex; gap:.4rem; align-items:center; }
   .btn{ padding:.35rem .6rem; border:1px solid var(--border); border-radius:.5rem; background:#f8fafc; font:inherit; cursor:pointer; }
   .btn:disabled{ opacity:.5; cursor:not-allowed }
 
@@ -36,7 +35,7 @@
       <img id="pageImg" alt="PDF page 1" loading="eager">
     </div>
     <div id="err" class="tip" style="display:none"></div>
-    <div class="tip">Swipe ◀/▶, tap arrows, or use Fit for tall pages.</div>
+    <div class="tip">Swipe ◀/▶, or tap arrows. Use “Fit” for tall pages.</div>
   </main>
 
   <!-- floating arrows -->
@@ -46,10 +45,7 @@
   <!-- slim bottom bar -->
   <div class="nav">
     <small id="pageIndicator">Page 1 / 10</small>
-    <div class="right">
-      <button class="btn" id="fitToggle">Fit: Width</button>
-      <button class="btn" id="jumpBtn" title="Jump to page">Jump</button>
-    </div>
+    <button class="btn" id="fitToggle">Fit: Width</button>
   </div>
 
 <script>
@@ -97,12 +93,6 @@
   window.addEventListener('keydown', e=>{
     if(e.key==='ArrowLeft')  prev();
     if(e.key==='ArrowRight') next();
-  });
-
-  // compact Jump (prompt)
-  document.getElementById('jumpBtn').addEventListener('click', ()=>{
-    const n = parseInt(prompt(`Jump to page (1–${NUM_PAGES})`, String(idx+1))||'',10);
-    if(!isNaN(n) && n>=1 && n<=NUM_PAGES){ idx = n-1; update(); }
   });
 
   // Fit toggle
