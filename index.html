@@ -2,51 +2,51 @@
 <html lang="pa" dir="ltr">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>SJS — Centered Mobile Viewer</title>
-<style>
-  :root{ --maxw:1000px; --muted:#6b7280; --border:#e5e7eb; }
-  body{ margin:0; font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial; color:#111; background:#fff; }
-  main{ margin:0 auto; max-width:var(--maxw); padding:12px; padding-bottom:84px; }
-  .stage{ 
-    position:relative; 
-    display:flex; 
-    justify-content:center;   /* horizontal centering */
-    align-items:center;       /* vertical centering */
-  }
-  img{ 
-    display:block; 
-    max-width:100%; 
-    height:auto; 
-    border:1px solid var(--border); 
-    border-radius:.6rem; 
-    background:#fff;
-    margin-left:auto; 
-    margin-right:auto;
-  }
-  .fit-h img{ 
-    width:auto; 
-    height:calc(100svh - 132px); 
-    max-height:calc(100svh - 132px); 
-  }
+<title>Sarbloh Japji Sahib</title>
 
-  /* Slim bottom bar */
-  .nav{ 
+<!-- Favicons -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="favicons/favicon-64.png">
+<link rel="icon" type="image/png" sizes="192x192" href="favicons/favicon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="favicons/favicon-180.png">
+<meta name="theme-color" content="#0b234a"> <!-- dark blue for mobile browser UI -->
+
+<style>
+  :root{ --maxw:1000px; --muted:#94a3b8; --border:#0a2a66; --blue:#0b234a; --blue-2:#0f2e68; --btn:#173b8c; }
+  body{ margin:0; font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial; color:#e5e7eb; background:#0b1220; }
+  main{ margin:0 auto; max-width:var(--maxw); padding:12px; padding-bottom:84px; }
+  .stage{ position:relative; display:flex; justify-content:center; align-items:center; }
+  img{
+    display:block; max-width:100%; height:auto;
+    border:1px solid #1e293b; border-radius:.6rem; background:#fff;
+    margin-left:auto; margin-right:auto;
+  }
+  .fit-h img{ width:auto; height:calc(100svh - 132px); max-height:calc(100svh - 132px); }
+
+  /* Slim bottom bar (dark blue) */
+  .nav{
     position:fixed; left:0; right:0; bottom:0; z-index:10;
     display:flex; align-items:center; justify-content:space-between;
     height:48px; padding:0 12px env(safe-area-inset-bottom);
-    border-top:1px solid var(--border); background:#fffccf; 
+    border-top:1px solid var(--border);
+    background: var(--blue); color:#fff;
   }
-  .nav small{ color:#111; font-weight:600; }
-  .btn{ padding:.35rem .6rem; border:1px solid var(--border); border-radius:.5rem; background:#f8fafc; font:inherit; cursor:pointer; }
-  .btn:disabled{ opacity:.5; cursor:not-allowed }
+  .nav small{ color:#fff; font-weight:700; }
+  .btn{
+    padding:.35rem .6rem; border:1px solid #2a478e; border-radius:.5rem;
+    background: var(--btn); color:#fff; font:inherit; cursor:pointer;
+  }
+  .btn:disabled{ opacity:.6; cursor:not-allowed }
 
   /* Floating tiny arrows */
-  .fab{ position:fixed; bottom:60px; width:42px; height:42px; border-radius:999px;
-        display:grid; place-items:center; border:1px solid var(--border);
-        background:#ffffffcc; backdrop-filter:saturate(1.1) blur(4px); cursor:pointer; }
+  .fab{
+    position:fixed; bottom:60px; width:42px; height:42px; border-radius:999px;
+    display:grid; place-items:center; border:1px solid #334155;
+    background:#0b234acc; color:#fff; backdrop-filter:saturate(1.1) blur(4px); cursor:pointer;
+  }
   .fab-left{ left:10px; } .fab-right{ right:10px; }
-  .tip{ color:var(--muted); font-size:.9rem; margin:4px 0 0 2px; }
 
+  .tip{ color:#94a3b8; font-size:.9rem; margin:4px 0 0 2px; }
   @media (max-width:560px){ body{font-size:15px} }
 </style>
 <body>
