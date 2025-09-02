@@ -36,19 +36,22 @@
     box-shadow:0 4px 16px rgba(0,0,0,.4);
   }
 
-  /* On small screens, enlarge for readability */
-  @media (max-width: 600px) {
-    img {
-      max-width:115%;
-      transform:scale(1.15);
-      transform-origin:center top;
-    }
-  }
-
+  /* Fit: Height — preserve aspect ratio, no zoom */
   .fit-h img{
     width:auto;
     height:calc(100svh - 132px);
     max-height:calc(100svh - 132px);
+    max-width:none;
+    transform:none !important;
+  }
+
+  /* On small screens, enlarge only in Fit: Width */
+  @media (max-width: 600px) {
+    .stage:not(.fit-h) img {
+      max-width:115%;
+      transform:scale(1.15);
+      transform-origin:center top;
+    }
   }
 
   /* Slim bottom bar */
