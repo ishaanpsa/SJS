@@ -12,16 +12,16 @@
 <meta name="theme-color" content="#0b234a">
 
 <style>
-  :root{ --maxw:1000px; --muted:#94a3b8; --border:#0a2a66; --blue:#0b234a; --blue2:#0e2b5a; --btn:#173b8c; }
+  :root{ --maxw:1000px; --muted:#94a3b8; --border:#0a2a66; --blue:#0b234a; --btn:#173b8c; }
   body{ margin:0; font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial; color:#e5e7eb; background:#0b1220; }
-  main{ margin:0 auto; max-width:var(--maxw); padding:12px; padding-bottom:132px; } /* more bottom space for audio+nav */
+  main{ margin:0 auto; max-width:var(--maxw); padding:12px; padding-bottom:84px; }
 
   .stage{
     position:relative;
     display:flex;
     justify-content:center;
     align-items:center;
-    min-height:calc(100svh - 180px); /* account for audio bar + nav */
+    min-height:calc(100svh - 132px);
   }
 
   img{
@@ -36,16 +36,16 @@
     box-shadow:0 4px 16px rgba(0,0,0,.4);
   }
 
-  /* Fit: Height — preserve aspect ratio, no zoom */
+  /* Fit: Height — keep aspect ratio, no zoom */
   .fit-h img{
     width:auto;
-    height:calc(100svh - 180px);
-    max-height:calc(100svh - 180px);
+    height:calc(100svh - 132px);
+    max-height:calc(100svh - 132px);
     max-width:none;
     transform:none !important;
   }
 
-  /* On small screens, enlarge only in Fit: Width */
+  /* Mobile readability: zoom only when NOT Fit: Height */
   @media (max-width: 600px) {
     .stage:not(.fit-h) img {
       max-width:115%;
@@ -54,31 +54,7 @@
     }
   }
 
-  /* Audio bar (compact) */
-  .audio{
-    position:fixed; left:0; right:0; bottom:48px; z-index:11; /* sits above bottom nav */
-    display:flex; align-items:center; gap:.6rem;
-    height:50px; padding:0 12px env(safe-area-inset-bottom);
-    background: #0e2b5a; border-top:1px solid #0a2550;
-  }
-  .audio button{
-    padding:.35rem .6rem; border:1px solid #2a478e; border-radius:.5rem; background:#173b8c; color:#fff; font:inherit; cursor:pointer;
-    min-width:64px;
-  }
-  .time{ font-variant-numeric: tabular-nums; color:#dbeafe; font-size:.95rem; }
-  .bar{ flex:1; display:flex; align-items:center; gap:.5rem; }
-  input[type="range"]{
-    -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:999px; background:#1f3c78; outline:none;
-  }
-  input[type="range"]::-webkit-slider-thumb{
-    -webkit-appearance:none; appearance:none; width:16px; height:16px; border-radius:50%; background:#ffffff; border:2px solid #173b8c;
-    margin-top:-5px;
-  }
-  input[type="range"]::-moz-range-thumb{
-    width:16px; height:16px; border-radius:50%; background:#ffffff; border:2px solid #173b8c;
-  }
-
-  /* Slim bottom bar */
+  /* Bottom bar */
   .nav{
     position:fixed; left:0; right:0; bottom:0; z-index:10;
     display:flex; align-items:center; justify-content:space-between;
@@ -95,7 +71,7 @@
 
   /* Floating arrows */
   .fab{
-    position:fixed; bottom:110px; width:42px; height:42px; border-radius:999px;
+    position:fixed; bottom:60px; width:42px; height:42px; border-radius:999px;
     display:grid; place-items:center; border:1px solid #334155;
     background:#0b234acc; color:#fff; backdrop-filter:saturate(1.1) blur(4px); cursor:pointer;
   }
@@ -113,33 +89,21 @@
     <div class="tip">Swipe ◀/▶, or tap arrows. Use “Fit” for tall pages.</div>
   </main>
 
-  <!-- floating arrows -->
+  <!-- Floating arrows -->
   <button class="fab fab-left"  id="prevFab"  aria-label="Previous page">◀</button>
   <button class="fab fab-right" id="nextFab"  aria-label="Next page">▶</button>
 
-  <!-- audio bar -->
-  <div class="audio" role="region" aria-label="Audio player">
-    <button id="playPause">Play</button>
-    <div class="bar">
-      <span class="time" id="cur">0:00</span>
-      <input id="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek">
-      <span class="time" id="dur">0:00</span>
-    </div>
-    <audio id="audio" preload="metadata"></audio>
-  </div>
-
-  <!-- slim bottom bar -->
+  <!-- Bottom bar -->
   <div class="nav">
     <small id="pageIndicator">Page 1 / 10</small>
     <button class="btn" id="fitToggle">Fit: Width</button>
   </div>
 
 <script>
-  /* =================== VIEWER =================== */
-  const NUM_PAGES = 10;
-  const BASE = "assets";
+  const NUM_PAGES = 10;                 // set to your page count
+  const BASE = "assets";                // folder containing page-001.png...
   const fname = n => `page-${String(n).padStart(3,"0")}.png`;
-  const bust = `?v=${Date.now()}`;
+  const bust = `?v=${Date.now()}`;      // cache-buster
 
   let idx = 0;
   const img  = document.getElementById('pageImg');
@@ -178,7 +142,7 @@
     if(e.key==='ArrowRight') next();
   });
 
-  // Fit toggle
+  // Fit toggle (Width/Height)
   let fit='width';
   function applyFit(){
     if(fit==='height'){ stage.classList.add('fit-h');  fitToggle.textContent='Fit: Height'; }
@@ -186,7 +150,7 @@
   }
   fitToggle.addEventListener('click', ()=>{ fit = (fit==='width'?'height':'width'); applyFit(); });
 
-  // swipe
+  // Swipe gestures
   let sx=0, sy=0, moved=false; const TH=40;
   stage.addEventListener('touchstart', e=>{ const t=e.changedTouches[0]; sx=t.clientX; sy=t.clientY; moved=false; }, {passive:true});
   stage.addEventListener('touchmove', ()=>{ moved=true; }, {passive:true});
@@ -202,67 +166,6 @@
     applyFit();
     update();
   })();
-
-  /* =================== AUDIO =================== */
-  // Put your file at /audio/track.mp3 or change this path:
-  const AUDIO_SRC = "audio/track.mp3";
-
-  const audio = document.getElementById('audio');
-  const playPause = document.getElementById('playPause');
-  const seek = document.getElementById('seek');
-  const cur = document.getElementById('cur');
-  const dur = document.getElementById('dur');
-
-  audio.src = AUDIO_SRC;
-
-  function fmt(t){
-    if(!isFinite(t)) return "0:00";
-    const m = Math.floor(t/60);
-    const s = Math.floor(t%60).toString().padStart(2,"0");
-    return `${m}:${s}`;
-  }
-
-  audio.addEventListener('loadedmetadata', ()=>{
-    dur.textContent = fmt(audio.duration);
-  });
-
-  // update progress
-  audio.addEventListener('timeupdate', ()=>{
-    if(audio.duration){
-      seek.value = Math.round((audio.currentTime / audio.duration) * 1000);
-      cur.textContent = fmt(audio.currentTime);
-    }
-  });
-
-  // seek on input
-  let seeking = false;
-  seek.addEventListener('input', ()=>{
-    if(audio.duration){
-      seeking = true;
-      audio.currentTime = (seek.value / 1000) * audio.duration;
-      cur.textContent = fmt(audio.currentTime);
-    }
-  });
-  seek.addEventListener('change', ()=> seeking = false);
-
-  // play/pause
-  function updateBtn(){
-    playPause.textContent = audio.paused ? "Play" : "Pause";
-  }
-  playPause.addEventListener('click', ()=>{
-    if(audio.paused) audio.play(); else audio.pause();
-  });
-  audio.addEventListener('play', updateBtn);
-  audio.addEventListener('pause', updateBtn);
-  audio.addEventListener('ended', ()=>{ audio.currentTime = 0; updateBtn(); });
-
-  // Optional: Media Session (lock screen controls on Android)
-  if ('mediaSession' in navigator) {
-    navigator.mediaSession.metadata = new MediaMetadata({ title: "Sarbloh Japji Sahib", artist: "", artwork: [] });
-    navigator.mediaSession.setActionHandler('play', ()=>audio.play());
-    navigator.mediaSession.setActionHandler('pause', ()=>audio.pause());
-    navigator.mediaSession.setActionHandler('seekto', e=>{ if(e.seekTime!=null) audio.currentTime = e.seekTime; });
-  }
 </script>
 </body>
 </html>
