@@ -36,20 +36,11 @@
     box-shadow:0 4px 16px rgba(0,0,0,.4);
   }
 
-  /* Fit: Height — keep aspect ratio, no zoom */
-  .fit-h img{
-    width:auto;
-    height:calc(100svh - 132px);
-    max-height:calc(100svh - 132px);
-    max-width:none;
-    transform:none !important;
-  }
-
-  /* Mobile readability: zoom only when NOT Fit: Height */
+  /* Mobile readability: zoom slightly */
   @media (max-width: 600px) {
-    .stage:not(.fit-h) img {
+    img {
       max-width:115%;
-      transform:scale(1.15);
+      transform:scale(1.1);
       transform-origin:center top;
     }
   }
@@ -57,17 +48,12 @@
   /* Bottom bar */
   .nav{
     position:fixed; left:0; right:0; bottom:0; z-index:10;
-    display:flex; align-items:center; justify-content:space-between;
+    display:flex; align-items:center; justify-content:center;
     height:48px; padding:0 12px env(safe-area-inset-bottom);
     border-top:1px solid var(--border);
     background: var(--blue); color:#fff;
   }
   .nav small{ color:#fff; font-weight:700; }
-  .btn{
-    padding:.35rem .6rem; border:1px solid #2a478e; border-radius:.5rem;
-    background: var(--btn); color:#fff; font:inherit; cursor:pointer;
-  }
-  .btn:disabled{ opacity:.6; cursor:not-allowed }
 
   /* Floating arrows */
   .fab{
@@ -86,7 +72,7 @@
       <img id="pageImg" alt="PDF page 1" loading="eager">
     </div>
     <div id="err" class="tip" style="display:none"></div>
-    <div class="tip">Swipe ◀/▶, or tap arrows. Use “Fit” for tall pages.</div>
+    <div class="tip">Swipe ◀/▶, or tap arrows.</div>
   </main>
 
   <!-- Floating arrows -->
@@ -96,7 +82,6 @@
   <!-- Bottom bar -->
   <div class="nav">
     <small id="pageIndicator">Page 1 / 10</small>
-    <button class="btn" id="fitToggle">Fit: Width</button>
   </div>
 
 <script>
@@ -109,8 +94,6 @@
   const img  = document.getElementById('pageImg');
   const ind  = document.getElementById('pageIndicator');
   const err  = document.getElementById('err');
-  const stage= document.getElementById('stage');
-  const fitToggle = document.getElementById('fitToggle');
   const prevFab = document.getElementById('prevFab');
   const nextFab = document.getElementById('nextFab');
 
@@ -142,14 +125,6 @@
     if(e.key==='ArrowRight') next();
   });
 
-  // Fit toggle (Width/Height)
-  let fit='width';
-  function applyFit(){
-    if(fit==='height'){ stage.classList.add('fit-h');  fitToggle.textContent='Fit: Height'; }
-    else              { stage.classList.remove('fit-h');fitToggle.textContent='Fit: Width'; }
-  }
-  fitToggle.addEventListener('click', ()=>{ fit = (fit==='width'?'height':'width'); applyFit(); });
-
   // Swipe gestures
   let sx=0, sy=0, moved=false; const TH=40;
   stage.addEventListener('touchstart', e=>{ const t=e.changedTouches[0]; sx=t.clientX; sy=t.clientY; moved=false; }, {passive:true});
@@ -163,7 +138,6 @@
   (function init(){
     const m = location.hash.match(/#p(\d+)/i);
     if(m){ idx = Math.min(Math.max(parseInt(m[1],10)-1,0), NUM_PAGES-1); }
-    applyFit();
     update();
   })();
 </script>
