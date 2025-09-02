@@ -2,20 +2,40 @@
 <html lang="pa" dir="ltr">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>SJS — Compact Mobile Viewer</title>
+<title>SJS — Centered Mobile Viewer</title>
 <style>
   :root{ --maxw:1000px; --muted:#6b7280; --border:#e5e7eb; }
   body{ margin:0; font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial; color:#111; background:#fff; }
   main{ margin:0 auto; max-width:var(--maxw); padding:12px; padding-bottom:84px; }
-  .stage{ position:relative; display:flex; justify-content:center; }
-  img{ display:block; max-width:100%; height:auto; border:1px solid var(--border); border-radius:.6rem; background:#fff; }
-  .fit-h img{ width:auto; height:calc(100svh - 132px); max-height:calc(100svh - 132px); }
+  .stage{ 
+    position:relative; 
+    display:flex; 
+    justify-content:center;   /* horizontal centering */
+    align-items:center;       /* vertical centering */
+  }
+  img{ 
+    display:block; 
+    max-width:100%; 
+    height:auto; 
+    border:1px solid var(--border); 
+    border-radius:.6rem; 
+    background:#fff;
+    margin-left:auto; 
+    margin-right:auto;
+  }
+  .fit-h img{ 
+    width:auto; 
+    height:calc(100svh - 132px); 
+    max-height:calc(100svh - 132px); 
+  }
 
   /* Slim bottom bar */
-  .nav{ position:fixed; left:0; right:0; bottom:0; z-index:10;
-        display:flex; align-items:center; justify-content:space-between;
-        height:48px; padding:0 12px env(safe-area-inset-bottom);
-        border-top:1px solid var(--border); background:#fffccf; }
+  .nav{ 
+    position:fixed; left:0; right:0; bottom:0; z-index:10;
+    display:flex; align-items:center; justify-content:space-between;
+    height:48px; padding:0 12px env(safe-area-inset-bottom);
+    border-top:1px solid var(--border); background:#fffccf; 
+  }
   .nav small{ color:#111; font-weight:600; }
   .btn{ padding:.35rem .6rem; border:1px solid var(--border); border-radius:.5rem; background:#f8fafc; font:inherit; cursor:pointer; }
   .btn:disabled{ opacity:.5; cursor:not-allowed }
@@ -49,13 +69,11 @@
   </div>
 
 <script>
-  // ---- config ----
   const NUM_PAGES = 10;
   const BASE = "assets";
   const fname = n => `page-${String(n).padStart(3,"0")}.png`;
   const bust = `?v=${Date.now()}`;
 
-  // ---- els ----
   let idx = 0;
   const img  = document.getElementById('pageImg');
   const ind  = document.getElementById('pageIndicator');
@@ -65,7 +83,6 @@
   const prevFab = document.getElementById('prevFab');
   const nextFab = document.getElementById('nextFab');
 
-  // ---- helpers ----
   const urlFor = n => `${BASE}/${fname(n)}${bust}`;
   const showErr = m => { err.style.display='block'; err.textContent=m; console.error(m); }
   const clearErr= () => { err.style.display='none'; err.textContent=''; }
@@ -85,7 +102,6 @@
     showErr(`Couldn't load: ${img.src.replace(location.origin,'')}. Check ${BASE}/${fname(idx+1)} (case-sensitive).`);
   });
 
-  // nav actions
   function prev(){ if(idx>0){ idx--; update(); } }
   function next(){ if(idx<NUM_PAGES-1){ idx++; update(); } }
   prevFab.addEventListener('click', prev);
@@ -113,7 +129,6 @@
     if(Math.abs(dx)>Math.abs(dy) && Math.abs(dx)>TH){ dx<0 ? next() : prev(); }
   }, {passive:true});
 
-  // init
   (function init(){
     const m = location.hash.match(/#p(\d+)/i);
     if(m){ idx = Math.min(Math.max(parseInt(m[1],10)-1,0), NUM_PAGES-1); }
